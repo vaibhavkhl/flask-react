@@ -41,33 +41,37 @@ def add_user():
     t0 = time.time()
     username = request.json['username']
     email = request.json['email']
+    useSql = request.json['useSql']
     n = int(request.json['n'])
     print ('n', n)
 
-    # for 10000 records 5.81 sec
-    # for i in range(n):
-    #     new_user = User(username + str(i), email)
-    #     db.session.add(new_user)
-    #     if i % 1000 == 0:
-    #         db.session.flush()
-    # db.session.commit()
+    if useSql:
+        # for 10000 records 0.42 sec
+        # 100000 4.49
+        db.engine.execute(
+            User.__table__.insert(),
+            [{"username": username + str(i), "email": email} for i in range(n)]
+        )
+    else:
+        # for 10000 records 5.81 sec
+        for i in range(n):
+            new_user = User(username + str(i), email)
+            db.session.add(new_user)
+            if i % 1000 == 0:
+                db.session.flush()
+        db.session.commit()
 
-    # for 10000 records 0.42 sec
-    # 100000 4.49
-    db.engine.execute(
-        User.__table__.insert(),
-        [{"name":'NAME ' + str(i), "email": email} for i in range(n)]
-    )
-    print ("SqlAlchemy: Total time for " + str(n) + " records " + str(time.time() - t0) + " secs")
+    #print ("SqlAlchemy: Total time for " + str(n) + " records " + str(time.time() - t0) + " secs")
     return jsonify({'time': str(time.time() - t0)})
 
 
 # endpoint to show all users
 @app.route("/user", methods=["GET"])
 def get_user():
+    t0 = time.time()
     all_users = User.query.all()
     result = users_schema.dump(all_users)
-    return jsonify(result.data)
+    return jsonify({'result': result.data,'time': str(time.time() - t0)})
 
 
 # endpoint to get user detail by id
@@ -99,6 +103,15 @@ def user_delete(id):
     db.session.commit()
 
     return user_schema.jsonify(user)
+
+@app.route("/user", methods=["DELETE"])
+def users_delete():
+    t0 = time.time()
+    db.engine.execute(
+        'DELETE FROM user'
+    )
+
+    return jsonify({'time': str(time.time() - t0)})
 
 
 if __name__ == '__main__':
