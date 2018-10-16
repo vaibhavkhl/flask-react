@@ -1,10 +1,13 @@
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
+from flask_cors import CORS
 import os
 import time
 
 app = Flask(__name__)
+CORS(app)
+
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:root@localhost/flask_react' #+os.path.join(basedir, 'crud.sqlite')
 db = SQLAlchemy(app)
